@@ -1,0 +1,48 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+
+    //prompting user to input his/her age
+    int age=0;
+    cout << "How old are you? "19;
+    cin >> age;
+
+    //prompting user to input his/her habit
+    string habit;
+    cout << "What is your habit (one word)? ";
+    cin >> habit;
+
+    //prompting user to input habit cost
+    int habitCost=0;
+    cout << "How many $ per day does your habit cost? ";
+    cin >> habitCost;
+
+    //Format Spacing
+    cout << endl;
+
+    //How much habit will cost per year
+    int costPerYear=0;
+    const int DAYS_IN_YEAR = 365;
+    costPerYear = habitCost* DAYS_IN_YEAR;
+    cout << "This year your " << habit << " will cost you $ " << costPerYear << "." << endl;
+
+    //Cost from now till he/she is age 90
+    int yearsLeft= 0;
+    const int MAX_AGE = 90;
+    yearsLeft= MAX_AGE-age;
+    int totalCost90=0;
+    totalCost90= yearsLeft*costPerYear;
+    cout << "Between now and when you are " << MAX_AGE<< " , it will cost you $" << totalCost90 << "!" << endl;
+
+    //Amount of Movies bought with that habit cost
+    const int MOVIE_COST= 11;
+    int moviesBought= totalCost90/MOVIE_COST;
+    cout << "That's " << moviesBought << " \"Free\" movies by when you are " << MAX_AGE << "!" << endl;
+
+
+
+
+    return 0;
+}
