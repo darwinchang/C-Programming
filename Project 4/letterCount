@@ -1,0 +1,136 @@
+#include <iostream>
+#include <vector>
+#include <iomanip>
+#include <cstdlib>
+#include <cctype>
+#include "ansiicodes.h"
+using namespace std;
+
+const int NUM_ALPHABET=26;
+
+//colour Ranges (anything greater than x will be the colour highest takes precedence)
+const int HIGHEST_COLOUR=11;
+const int SECOND_HIGHEST_COLOUR=7;
+const int THIRD_HIGHEST_COLOUR=4;
+const int FOURTH_HIGHEST_COLOUR=0;
+
+
+//protoype of functions
+//Counts the letter
+vector<int>countLetters(string userInputLine);
+//Creates the Vector for Alphabets
+vector<char>createAlphabetVector();
+//Changes the inputted string to uppercase
+char changeUpperCase(char currentChar);
+
+
+int main(){
+    //gets user string
+    cout << "Enter your string " << endl <<
+            ": ";
+    string userInputLine;
+    getline(cin, userInputLine);
+    cout << "You entered: " << userInputLine << endl;
+
+    //Put Vector in to use from function (don't have to keep calling on it)
+    vector<char>alphabetVector=createAlphabetVector();
+    vector<int> countingLetter=countLetters(userInputLine);
+
+    //spacing
+    cout << endl;
+
+    //Character Count (header)
+    cout << "Character Count:" << endl;
+    cout << "----------------" << endl;
+
+    //OUTPUTS ALPHABET VECTOR
+    for(int i=0;i<alphabetVector.size();i++){
+        cout << setw(5) << alphabetVector.at(i);
+    }
+
+    cout << endl;
+
+    for(int i=0;i<countingLetter.size();i++){
+        //FOR INPUTTING COLOUR
+        if(countingLetter.at(i)>=HIGHEST_COLOUR){
+            cout << ANSII_BOLD << ANSII_YELLOW;
+        }
+        else if(countingLetter.at(i)>=SECOND_HIGHEST_COLOUR){
+            cout << ANSII_BOLD << ANSII_CYAN;
+        }
+        else if(countingLetter.at(i)>=THIRD_HIGHEST_COLOUR){
+            cout << ANSII_CYAN;
+        }
+        else if(countingLetter.at(i)>=FOURTH_HIGHEST_COLOUR){
+            cout << ANSII_BLUE;
+        }
+
+        //OUTPUTS THE LETTER COUNT TO MATCH ALPHABET VECTOR
+        cout << setw(5) << countingLetter.at(i);
+        cout << ANSII_NORMAL;
+    }
+
+    cout << endl;
+
+
+
+    return 0;
+}
+
+
+
+vector<char>createAlphabetVector(){
+    //65= start of the alphabet at A capital to Z=90
+    //SETS THE ALPHABET VECTOR
+    vector<char>alphabetVector= {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+    return alphabetVector;
+}
+
+char changeUpperCase(char currentChar){
+    //CHECKS IF THE VALUE IS IN THE RANGE OF A-Z or a-z OR A PUNCTUATION
+    int daIndex=currentChar-'A';
+    if(daIndex>=32&&daIndex<=57){
+            //CHANGES a-z TO UPPER CASE, RETURNS UPPERCASED VERSION
+            char upperCaseLetter = toupper(currentChar);
+            return upperCaseLetter;
+    //IF IN THIS IT'S UPPERCASE, RETURNS CHAR
+    }else if(daIndex>=0&&daIndex<=25){
+        return currentChar;
+    }
+    //IF IN HERE, MEANS NOT ALPHABET, CHANGES TO !
+    else{
+        return '!';
+    }
+
+}
+
+//DOES THE ACTUAL COUNTING OF LETTERS
+vector<int>countLetters(string userInputLine){
+    vector<char>alphabetVector=createAlphabetVector();
+    vector<int>alphabetCount;
+
+    //CREATES VECTOR FOR THE NUMBER COUNT
+    for(int i=0;i<NUM_ALPHABET;i++) {
+        alphabetCount.push_back(0);
+    }
+
+    //CHECKS IF CHARACTER IS EITHER A OR !
+    for(char ch: userInputLine){
+        char upperCased=changeUpperCase(ch);
+        int daIndex=upperCased-'A';
+        //COUNTS OCCURENCE OF EACH CHARACTER BASED ON ALPHABET
+        if(daIndex>=0&&daIndex<=25){
+            for(int i=0;i<NUM_ALPHABET;i++){
+                if(daIndex == i){
+                    alphabetCount.at(i)+=1;
+                }
+            }
+        }
+        //IF IN HERE MEANS IT'S ! DOENS'T ADD ANY COUNERS
+        else{
+            //do nothing
+            }
+        }
+    return alphabetCount;
+}
+
