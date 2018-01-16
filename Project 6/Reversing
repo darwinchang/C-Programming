@@ -1,0 +1,261 @@
+#include <iostream>
+#include <assert.h>
+
+using namespace std;
+
+//Checks that it's a valid permutation
+bool isPermutation(int arr[], int n);
+
+//reverses the Array, used to solve for score
+void reverseArray(int arr[], int m);
+
+//creates a permutation for selected array and size
+void initializePermutation(int arr[], int n);
+
+//sets the permutation as the next posisble one is lexi-something order, if can't returns 0 (aka false)
+bool nextPermutation(int arr[], int n);
+
+//just for testing purposes
+void demoPermutations();
+
+//gets score that array will get
+int scoreArray(int arr[], int n);
+
+//copies an array from one to the other
+void copyArray(int source[], int target[],int n);
+
+//couts the array of choice
+void printArr(int arr[],int n);
+
+//as name implioes
+void printPermutationAndScore(int arr[], int n);
+
+//Final function.
+void printOptimalPermutations(int low, int n);
+
+int main()
+{
+    /* USED FOR TESTING PURPOSES
+    // Simple tests for isPermutation(). Add more for better testing.
+    int arr1[] = {4, 2, 3, 1, 5};
+    cout << "isPerm 1? " << isPermutation(arr1, 5) << endl;
+    int arr2[] = {2,4,1,3};
+    cout << "isPerm 2? " << isPermutation(arr2, 5) << endl;
+    //   cout<<scoreArray(arr2,4)<<endl;
+    int arr3[] = {3,1,4,5,2};
+    cout << "isPerm 3? " << isPermutation(arr3, 4) << endl;
+    // Testing
+    int arr4[]={3,3,3,1,3};
+    cout << "isPerm 4? " << isPermutation(arr4, 5) << endl;
+    */
+
+    printOptimalPermutations(1,11);
+
+    return (0);
+}
+
+
+void printArr(int arr[],int n){
+    for (int i=0;i<n;i++){
+        cout<<arr[i];
+        if (i<n-1){
+            cout <<", ";
+        }
+    }
+}
+
+
+//PART 1.1
+// Returns 1 if arr is a permutation of 1, ..., n, and 0 otherwise. Will return 0 if array size are not equal.
+bool isPermutation(int arr[], int n)
+{
+    //temporary Array
+    int tempArr[n];
+    initializePermutation(tempArr,n);
+    for (int i=0;i<n;i++){
+        int occurances = 0;
+        for (int j=0;j<n;j++){
+            if (arr[j]==tempArr[i]) occurances++;
+        }
+        if (occurances!=1) return false;
+    }
+
+return true;
+
+}
+
+
+//PART 1.2
+// Initialize arr[] to hold the values 1 to n, in order.
+void initializePermutation(int arr[], int n)
+{
+    //Creates the simplest Array 1,2,3,...
+    for (int i=0;i<n;i++){
+        arr[i]=i+1;
+    }
+    return;
+}
+
+
+//PART 1.3
+//======================================================================================================================
+void copyArray(int source[],int target[], int n){
+    for (int i=0;i<n;i++){
+        target[i]=source[i];
+    }
+}
+
+
+
+void reverseArray(int arr[],int m){
+for (int i=0; i < m/2; i++)
+{
+    int p = m-1-i;
+    int temp = arr[i];
+    arr[i]=arr[p];
+    arr[p]=temp;
+}
+}
+
+
+// Reverse the array arr, changing the original array.
+void fullReverse(int arr[], int n)
+{
+    int tempArr[n];
+    for (int i=0;i<n;i++){
+        tempArr[n-(i+1)]=arr[i];
+    }
+
+    for (int i=0;i<n;i++){
+        arr[i]=tempArr[i];
+    }
+    return;
+}
+
+
+//returns -1 if arr is not a permutation
+int scoreArray(int arr[], int n) {
+    int score = 0;
+    if (isPermutation(arr, n)) {
+        int tarr[n];
+        copyArray(arr, tarr, n);
+        while (tarr[0] != 1) {
+            reverseArray(tarr, tarr[0]);
+            score++;
+        }
+            return score;
+
+    }
+    else
+       return -1;
+}
+//======================================================================================================================
+
+//Part 1.4 printing the array score.
+void printPermutationAndScore(int arr[],int n){
+    if (scoreArray(arr,n)!=-1) {
+        cout << "[n = " << n << "] Score of {";
+        printArr(arr, n);
+        cout << "} = " << scoreArray(arr, n) << endl;
+
+    }
+    else {
+        cout << "Not a proper Permutation, score set to 0" << endl;
+        cout << "[n = " << n << "] Score of {";
+        printArr(arr, n);
+        cout << "} = 0" << endl;
+    }
+}
+
+// Given a permutation, advance it to the next permutation in lexicographic
+// order. Algorithm discussed here:
+// http://stackoverflow.com/questions/352203/generating-permutations-lazily
+// Return 0 if no next permutation is possible; 1 if it new permutation found.
+bool nextPermutation(int arr[], int n)
+{
+    // Check that arr[] is already a valid permutation.
+    // This will crash the program if arr() is not a valid permutation.
+    assert(isPermutation(arr, n));
+
+    // Ensure the permutation is large enough to support re-ordering.
+    if (n <= 1) {
+        return 0;
+    }
+
+    // Find the longest tail
+    int tailStartIdx = n - 1;
+    while (arr[tailStartIdx - 1] > arr[tailStartIdx]) {
+        tailStartIdx --;
+        if (tailStartIdx == 0) {
+            return 0;
+        }
+    }
+    int swapFrontIdx = tailStartIdx - 1;
+
+    // Find the element in the sorted tail which is the smallest element
+    // larger than the element before the tail.
+    int swapInTailIdx = n - 1;
+    while (arr[swapInTailIdx] < arr[swapFrontIdx]) {
+        swapInTailIdx --;
+    }
+
+    // Swap the elements:
+    int temp = arr[swapInTailIdx];
+    arr[swapInTailIdx] = arr[swapFrontIdx];
+    arr[swapFrontIdx] = temp;
+
+    // Reverse the tail:
+    reverseArray(arr + tailStartIdx, n - tailStartIdx);
+
+    return 1;
+}
+
+// Display all permutations of a specific size.
+// Demonstrates how to use the permutation functions.
+void demoPermutations()
+{
+    // Create the first permutation
+    const int SIZE = 4;
+    int perm[SIZE];
+    initializePermutation(perm, SIZE);
+
+    // Create all possible permutations
+    int counter = 1;
+    bool moreToGo = true;
+    while (moreToGo) {
+        // Display the permutation
+        cout << counter << ": ";
+        for (int i = 0; i < SIZE; i++) {
+            cout << perm[i] << ", ";
+        }
+        cout << endl;
+
+        moreToGo = nextPermutation(perm, SIZE);
+        counter++;
+    }
+}
+
+void printOptimalPermutations(int low, int n){
+    for (int i=low;i<=n;i++){
+        //creates the first permutation
+        int perm[i];
+        initializePermutation(perm, i);
+
+        //creates the permutation for the highest score
+        int optimalPermutation[i];
+        bool moreToGo=true;
+        int currentHighScore=0;
+        while(moreToGo){
+
+            //check if the Permutation will be highest score
+            if(scoreArray(perm,i)>=currentHighScore){
+                for(int x=0;x<i;x++)
+                optimalPermutation[x]=perm[x];
+                currentHighScore=scoreArray(perm,i);
+            }
+            moreToGo = nextPermutation(perm,i);
+        }
+        printPermutationAndScore(optimalPermutation,i);
+    }
+}
+
