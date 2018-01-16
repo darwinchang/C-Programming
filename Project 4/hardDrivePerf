@@ -1,0 +1,299 @@
+#include <iostream>
+#include <cmath>
+#include <iomanip>
+#include <ctime>
+using namespace std;
+
+
+//The hard drive's stats
+const int BASE_SECTOR_AMOUNT=8;
+const int SECTOR_INCREMENT_AMOUNT=2;
+const int NUMBER_OF_TRACKS_PER_GROUP=4;
+const int TotalNumTracks=22;
+const int MAX_TRACK_NUM=TotalNumTracks-1; //Refactor this to something like "number of final track" or something
+const float SECONDS_PER_MIN=60;
+const float headMoveRate = 0.002;
+const int MIN_RPM_VALUE=4000;
+const int MAX_RPM_VALUE=15000;
+
+
+
+//Calculating Amount of Sectors in the desired track
+int amountOfSectors(int trackNumber){
+    int amountOfSectors=0;
+    int trackGroup= floor(trackNumber/NUMBER_OF_TRACKS_PER_GROUP);
+    amountOfSectors = SECTOR_INCREMENT_AMOUNT*trackGroup+BASE_SECTOR_AMOUNT;
+    return amountOfSectors;
+}
+
+
+//Function that calculates the total number of Sectors.
+int totalSectors(){
+    int currentTotalSectors=0;
+    for (int currentTrack=0; currentTrack<=MAX_TRACK_NUM; currentTrack++){
+        currentTotalSectors += amountOfSectors(currentTrack);
+    }
+    return currentTotalSectors;
+}
+
+
+//Function to find track when given the sector.
+int trackNumGivenSector(int sectorNum){
+    int currentTotalSectors=0;
+    int currentTrackNumber=-1;
+    int trackCalculation=0;
+    sectorNum= sectorNum+1;
+    while (sectorNum>currentTotalSectors){
+        currentTotalSectors = currentTotalSectors + amountOfSectors(trackCalculation);
+        currentTrackNumber++;
+        trackCalculation++;
+    }
+    return currentTrackNumber;
+}
+
+//Function for test Track graphs
+void testTrackFunction(){
+    //Table FOR THE VALUES THAT THE TEACHER WANTS
+    int trackTableValue=0;
+    cout << "TESTING: Track Functions" << endl;
+    cout << "------------------------" << endl;
+    cout << "Now displaying the [track#] to [sectors per track] mapping: " << endl;
+    cout << "     Track #" << "   #Sectors" << endl;
+    while (trackTableValue<=MAX_TRACK_NUM){
+        cout << setw(12) << trackTableValue << setw(11) << amountOfSectors(trackTableValue) << endl;
+        trackTableValue++;
+    }
+
+    //formatting line space
+    cout << endl;
+    cout << "Total # Sectors: " << totalSectors() << endl << endl;
+
+    cout << "Now displaying the [sector number] to [track number] mapping: " << endl
+         << "Checking every sector at start." << endl;
+    cout << "      Sector" << "      Track" << endl;
+    int sectorTableValue=0;
+    while (sectorTableValue<=24){
+        cout << setw(12) << sectorTableValue << setw(11) << trackNumGivenSector(sectorTableValue) << endl;
+        sectorTableValue++;
+    }
+
+    cout << endl;
+    cout << "Checking every 13th sector" << endl;
+    cout << "      Sector" << "      Track" << endl;
+    while (sectorTableValue<=(totalSectors()-1)){
+        cout << setw(12) << sectorTableValue << setw(11) << trackNumGivenSector(sectorTableValue) << endl;
+        sectorTableValue=sectorTableValue+13;
+    }
+
+}
+
+//Function find RPM values
+int obtainRpmValue(){
+    cout << "Enter HD rotations per minute (RPM) : ";
+    int userRpmValue=0;
+    cin >> userRpmValue;
+    while (userRpmValue<1 || userRpmValue>50000){
+        cout << "Error: Value mustbe between 1 and 50000." << endl;
+        cout << "Enter HD rotations per minute (RPM) : ";
+        cin >> userRpmValue;
+    }
+    return userRpmValue;
+}
+
+// Finds the time it takes for the seek head to get to a given track from the last track on which getSeekTime was called (default to 0)
+float properGetSeekTime(int trackNum){ // 0 is first track and trackNum + 1 is the nth track
+    static int prevTrack = 0;
+    float seekTime = abs(trackNum - prevTrack)*headMoveRate;
+    prevTrack = trackNum;
+    return seekTime;
+}
+
+// Finds the time it takes for the seek head to get from one given track to another
+float getSeekTime(int startTrack, int endTrack){
+    float seekTime = abs(startTrack - endTrack)*headMoveRate;
+    return seekTime;
+}
+
+//Converts RPM to RPS
+float getRPSfromRPM(int rpm){
+    float rps = rpm/60.0;
+    return rps;
+}
+
+// given RPM, returns average rotational delay
+float getRotDelay(int rpm){
+    float rps = getRPSfromRPM(rpm);
+    float rotDelay = (1/(2*rps));
+    return rotDelay;
+}
+
+//Given track number, return the time to read a sector in said track
+float timePerSect(int trackNum, int rpm){
+    float rps = getRPSfromRPM(rpm);
+    int numSectsPerTrack = amountOfSectors(trackNum);
+
+    // Time to read a sector (in seconds) is rps^-1 * numberOfSectors^-1
+    float readTimePerSect = 1/ (rps*numSectsPerTrack);
+    return readTimePerSect;
+}
+
+void testRotationTimes(int rpm){
+    cout<<"\nAll times measured in seconds"<<endl;
+    cout<<"RPM is: "<<rpm<<endl;
+    cout<<"RPS is: "<<getRPSfromRPM(rpm)<<endl;
+    cout<<"The rotational delay is: "<<getRotDelay(rpm)<<endl;
+    cout<<"Time to read a sector off the first track: "<<timePerSect(0,rpm)<<endl;
+    cout<<"Time to read a sector off the last track: "<<timePerSect(MAX_TRACK_NUM,rpm)<<endl;
+    return;
+}
+
+//Time to read off a sector of a given track, starting from another given track
+float accessTimeForGivenSect(int startTrack,int readTrack,int rpm) {
+    float accessTime = getSeekTime(startTrack, readTrack) + getRotDelay(rpm) + timePerSect(readTrack, rpm);
+    return accessTime;
+}
+
+//Get average access time from all possible situations, using average rotational delay
+// i is starting track and j is ending track (including situations where tracks are the same)
+float averageAccessTime(int rpm) {
+    int iter = 0;
+    float sum = 0;
+    for (int i = 0; i <= MAX_TRACK_NUM; i++) {
+        for (int j = 0; j <= MAX_TRACK_NUM; j++) {
+            int numSects = amountOfSectors(j);
+            for (int k = 0; k < numSects; k++) {
+                sum += accessTimeForGivenSect(i, j, rpm);
+                iter++;
+            }
+        }
+    }
+return sum/iter;
+}
+
+//using a randomized approach, 1,000,000 trials
+float averageAccessTimeRandom(int rpm){
+    int numtrials = 1000000;
+    float sum = 0;
+    srand(time(NULL));
+    for (int trial = 0; trial < numtrials; trial++){
+        int startTrack = rand()%(MAX_TRACK_NUM+1);
+        int endTrack = rand()%(MAX_TRACK_NUM+1);
+        sum +=accessTimeForGivenSect(startTrack,endTrack,rpm);
+    }
+
+    return sum/numtrials;
+}
+
+//i IS THE COLUMN, j is the row
+//you can get rid of the stuff inside here, the important thing tho is the loop and the getSeekTime(i,j)
+void testSeekTime(){
+    cout << "TESTING: Seek Times" << endl
+         << "-------------------" << endl;
+    cout << "Now displaying the [track #] to [track #] seek times." << endl
+         << "Starting track shown down left most column; ending track in the first row." << endl;
+
+    cout << "From: ";
+    for (int xValue=0 ; xValue <= MAX_TRACK_NUM; xValue++){
+        cout << setw(4) << xValue << "  ";
+    }
+    cout << endl;
+    for (int i = 0; i <= MAX_TRACK_NUM; i++){
+        cout << setw(4) << i << " ";
+        for (int j = 0; j <= MAX_TRACK_NUM; j++) {
+            cout << setw(4) << getSeekTime(i, j) << " ";
+        }
+        cout << endl;
+    }
+    return;
+}
+
+void testRotationTime(){
+    cout << fixed << setprecision (6);
+    cout << "TESTING: Rotation Times" << endl
+         << "-----------------------" << endl;
+    cout << "Now displaying the [rotation delay] per [track]." << endl;
+    cout << setw(6) << "RPM" << setw(8) << "RPS" << setw(17) << "Rotation Delay" << setw(17) << "Read Track 1" << setw(17) << "Read Max Track" << endl;
+    for (int rpm=MIN_RPM_VALUE; rpm<=MAX_RPM_VALUE; rpm+=1000){
+        cout << fixed << setprecision(2);
+        cout << setw(6) << rpm << setw(8) << getRPSfromRPM(rpm) << fixed << setprecision (6) << setw(17) << getRotDelay(rpm)  << setw(17) << timePerSect(0,rpm) << setw(17) << timePerSect(MAX_TRACK_NUM, rpm)<<endl;
+
+    }
+
+
+}
+
+void testAccessReadTimes(){
+    cout << "TESTING: Access & Read Times" << endl
+         << "----------------------------" << endl;
+    cout << "Now displaying time to [acess and read] for soe sectors for specific" << endl
+         << "[RPM], [Start track #] and [target sector #]." << endl;
+    cout << setw(10) << "RPM" << setw(10) << "Track" << setw(10) << "Sector" << setw(10) << "Time" << endl;
+    int rpm=MIN_RPM_VALUE;
+    for(int rpm=MIN_RPM_VALUE; rpm<=MAX_RPM_VALUE ; rpm+=2000){
+        for(int trackNum=0; trackNum<=MAX_TRACK_NUM; trackNum+=8){
+            for(int sectorNum=0; sectorNum<=totalSectors(); sectorNum+=123){
+                cout << setw(10) << rpm << setw(10) << trackNum << setw(10) << sectorNum << setw(10) << accessTimeForGivenSect(trackNum,trackNumGivenSector(sectorNum),rpm) << endl;
+            }
+        }
+    }
+}
+
+void testReadvsRandRead(){
+    cout << "Now displaying access and read times" << endl;
+    cout << setw(10) << "RPM" << setw(15) << "Read Time" << setw(22) << "Rand Read Time (*)" << endl;
+    for(int rpm=MIN_RPM_VALUE;rpm<=MAX_RPM_VALUE;rpm+=1000){
+        cout << setw(10) << rpm << setw(15) << averageAccessTime(rpm) << setw(22) << averageAccessTimeRandom(rpm) << endl;
+    }
+    cout << endl;
+    cout << "(*) = Values depend on random numbers so will change a little between runs" << endl;
+}
+
+int main() {
+    cout << fixed << setprecision(3) << endl;
+
+    //prints the graph for the Track Functions
+    testTrackFunction();
+    cout << endl;
+
+    //Prints the graph for the seek tie functions
+    testSeekTime();
+    cout << endl << endl;
+
+    //prints the graph for rotation time
+    testRotationTime();
+    cout << endl << endl;
+
+    //prints the graph for access read times
+    testAccessReadTimes();
+    cout << endl << endl;
+
+    //Compares read time vs random read time
+    testReadvsRandRead();
+    cout << endl << endl;
+
+
+    //asking for RPM values
+    int rpm=0;
+    rpm=obtainRpmValue();
+    //Header
+    cout << "Hard Drive Statiostics: " << endl
+         << "------------------------" << endl;
+    cout << "Number of tracks:             " << TotalNumTracks << endl
+         << "Total number of sectors:      " << totalSectors() << endl
+         << "Revolutions per minute (RPM): " << rpm << endl
+         << fixed << setprecision(1)
+         << "Revolutions per second (RPS): " << getRPSfromRPM(rpm) << endl
+         << fixed << setprecision(6)
+         << "Rotational Delay (seconds):   " << getRotDelay(rpm) << endl
+         << "Time to read first sector:    " << timePerSect(0,rpm) << " seconds" << endl
+         << "Time to read last sector:     " << timePerSect(MAX_TRACK_NUM,rpm) << " second" << endl
+         << "Average read time:            " << averageAccessTime(rpm) << " seconds" << endl
+         << "Average (random) read time:   " << averageAccessTimeRandom(rpm) << " seconds (*)" << endl;
+    cout << "(*) = Vales depend on random numbers so will change a little between runs.";
+
+
+    return 0;
+
+
+
+}
