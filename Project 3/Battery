@@ -1,0 +1,90 @@
+//By Darwin Chang
+
+#include <iostream>
+#include "iomanip"
+#include "ansiicodes.h"
+using namespace std;
+
+int main(){
+    //Title Heaer
+    cout << "Batery Voltage of state of charge (SoC) Generator" << endl
+         << "------------------------------------------------" << endl;
+    cout << "What is your minimum voltage (in mV and integer):";
+    int minimumDisplayVoltage=0;
+    cin >> minimumDisplayVoltage;
+
+    //Prompts user for max voltage range
+    cout << "What is your maximum volatge (in mV and integer):";
+    int maximumDislayVoltage=0;
+    cin >> maximumDislayVoltage;
+
+    cout << "What would you like the step size from each value to be?";
+    int voltageStepSize=0;
+    cin >> voltageStepSize;
+
+    //Table Header
+    cout << endl;
+    cout << ANSII_BOLD
+         << " Voltage" << "     SoC" << " Description" << endl
+         << " -------" << "  ------" << " -----------" << endl
+         << ANSII_NORMAL;
+    const int maximumVoltage= 4200;
+    const int minimumVoltage=3000;
+
+    //finding the percentage of battery
+    while (minimumDisplayVoltage<=maximumDislayVoltage){
+        int percentageBattery=0;
+        percentageBattery = (minimumDisplayVoltage-minimumVoltage)*100/1200;
+        if (minimumDisplayVoltage<3000){
+            percentageBattery=0;
+        }
+        if (minimumDisplayVoltage>4200){
+            percentageBattery=100;
+        }
+
+        //Battery percentages ranges for each status
+        const int TOO_LOW_BAT= 3180;
+        const int LOW_BAT= 3420;
+        const int OK_BAT= 4140;
+        const int FULL_BAT= 4200;
+
+        //Colour Selection
+        if (minimumDisplayVoltage<=TOO_LOW_BAT){
+            cout << ANSII_RED << ANSII_BOLD;
+        }
+        else if (minimumDisplayVoltage<=LOW_BAT){
+            cout << ANSII_BLUE;
+        }
+        else if (minimumDisplayVoltage<=OK_BAT){
+            cout << ANSII_NORMAL;
+        }
+        else if (minimumDisplayVoltage<=FULL_BAT){
+            cout << ANSII_GREEN;
+        }
+        else if (minimumDisplayVoltage>FULL_BAT){
+            cout << ANSII_RED << ANSII_BOLD;
+        }
+
+        //Output the table
+        cout << " " << minimumDisplayVoltage << "mV" << setw(8) << percentageBattery << "%" << setw(1);
+
+
+        if (minimumDisplayVoltage<=TOO_LOW_BAT){
+            cout << " Too low!" << endl;
+        }
+        else if (minimumDisplayVoltage<=LOW_BAT){
+            cout << " Low" << endl;
+        }
+        else if (minimumDisplayVoltage<=OK_BAT){
+            cout << " Ok" << endl;
+        }
+        else if (minimumDisplayVoltage<=FULL_BAT){
+            cout << " Full" << endl;
+        }
+        else if (minimumDisplayVoltage>FULL_BAT){
+            cout << " CAUTION: Overcharged!" << endl;
+        }
+        cout << ANSII_NORMAL;
+        minimumDisplayVoltage = minimumDisplayVoltage + voltageStepSize;
+    }
+}
